@@ -182,4 +182,18 @@ This project was built as a backend engineering portfolio project to demonstrate
 
 These trade-offs were made to prioritize readability, maintainability, and engineering clarity.
 
+## 📊 Dashboard
+
+![Dashboard](docs/images/Dashboard.png)
+
+## 🚨 Fraud Alerts
+
+![Alerts](docs/images/Diagrams.png)
+
+## 📊 Table
+
+![Table](docs/images/Table.png)
+
+
+
 
