@@ -12,6 +12,9 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+
+// IDEMPOTENT DATASEEDER
+
 @Component
 public class DataSeeder implements CommandLineRunner {
 
@@ -28,66 +31,49 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     public void run(String... args) {
 
-
-        System.out.println(">>> DATA SEEDER RUNNING");
-
         //1. Customer
-        Customer customer = new Customer();
-        customer.setName("John Doe");
-        customer.setEmail("johndoe@demo.com");
-        customer.setCountry("ES");
-
-        Customer customer2 = new Customer();
-        customer2.setName("Gina Davis");
-        customer2.setEmail("ginadavis@demo.com");
-        customer2.setCountry("US");
-
-        Customer customer3 = new Customer();
-        customer3.setName("Arnold Schwarzenegger");
-        customer3.setEmail("t800@demo.com");
-        customer3.setCountry("NG");
-
-        customer = customerRepository.save(customer);
-        customer2 = customerRepository.save(customer2);
-        customer3 = customerRepository.save(customer3);
-
+        Customer customer = getOrCreateCustomer("John Doe", "johndoe@demo.com", "ES");
+        Customer customer2 = getOrCreateCustomer("Gina Davis", "ginadavis@demo.com", "US");
+        Customer customer3 = getOrCreateCustomer("Arnold Schwarzenegger", "t800@demo.com", "NG");
 
         //2. Account
-        Account account = new Account();
-        account.setCustomer(customer);
-        account.setIban("ES91TEST0000000001");
-
-        account = accountRepository.save(account);
-
-        Account account2 = new Account();
-        account2.setCustomer(customer2);
-        account2.setIban("NG23TEST3216549871");
-
-        account2 = accountRepository.save(account2);
-
-
-        Account account3 = new Account();
-        account3.setCustomer(customer3);
-        account3.setIban("US65TEST8576453625");
-
-        account3 = accountRepository.save(account3);
+        Account account = getOrCreateAccount(customer, "ES91TEST0000000001");
+        Account account2 = getOrCreateAccount(customer2, "US65TEST8576453625");
+        Account account3 = getOrCreateAccount(customer3, "NG23TEST3216549871");
 
         //3. Transactions
-//        createTx(customer.getId(), account.getId(), 200);
-//        createTx(customer.getId(), account.getId(), 5000);
-//        createTx(customer.getId(), account.getId(), 15000);
-//        createTx(customer.getId(), account.getId(), 3000);
-//        createTx(customer.getId(), account.getId(), 25000);
-
-        createTx(customer.getId(), account.getId(), 200, customer.getCountry());      // LOW
-        createTx(customer2.getId(), account2.getId(), 1500, customer2.getCountry());   // LOW
-        createTx(customer3.getId(), account3.getId(), 5000, customer3.getCountry());   // MEDIUM
-        createTx(customer.getId(), account.getId(), 9000, customer.getCountry());     // MEDIUM
-        createTx(customer2.getId(), account2.getId(), 15000, customer2.getCountry());  // HIGH
-        createTx(customer3.getId(), account3.getId(), 25000, customer3.getCountry());  // HIGH
+        seedTransaction(customer.getId(), account.getId(), 200, customer.getCountry());
+        seedTransaction(customer2.getId(), account2.getId(), 1500, customer2.getCountry());
+        seedTransaction(customer3.getId(), account3.getId(), 5000, customer3.getCountry());
+        seedTransaction(customer.getId(), account.getId(), 9000, customer.getCountry());
+        seedTransaction(customer2.getId(), account2.getId(), 15000, customer2.getCountry());
+        seedTransaction(customer3.getId(), account3.getId(), 25000, customer3.getCountry());
     }
 
-    private void createTx(UUID customerId, UUID accountId, double amount, String country){
+    // CUSTOMER SAFE CREATION
+    private Customer getOrCreateCustomer(String name, String email, String country){
+        return customerRepository.findByEmail(email).orElseGet(() -> {
+           Customer c = new Customer();
+           c.setName(name);
+           c.setEmail(email);
+           c.setCountry(country);
+           return customerRepository.save(c);
+        });
+    }
+
+    // ACCOUNT SAFE CREATION
+    private Account getOrCreateAccount(Customer customer, String iban){
+        return accountRepository.findByIban(iban)
+                .orElseGet(() -> {
+                    Account a = new Account();
+                    a.setCustomer(customer);
+                    a.setIban(iban);
+                    return accountRepository.save(a);
+                });
+    }
+
+    // TRANSACTION SAFE CREATION
+    private void seedTransaction(UUID customerId, UUID accountId, double amount, String country){
         TransactionRequest request = new TransactionRequest();
 
         request.setCustomerId(customerId);
@@ -96,7 +82,7 @@ public class DataSeeder implements CommandLineRunner {
         request.setCurrency("EUR");
         request.setCountry(amount > 10000 ? "NG" : country);
         request.setMerchant("Amazon");
-        request.setIpAdress("192.168.30.2");
+        request.setIpAddress("192.168.30.2");
 
         transactionService.process(request);
     }

@@ -34,7 +34,7 @@ public class TransactionRequest {
 
     private String merchant;
 
-    private String IpAdress;
+    private String IpAddress;
 
 
     public BigDecimal getAmount() {
@@ -85,11 +85,11 @@ public class TransactionRequest {
         this.merchant = merchant;
     }
 
-    public String getIpAdress() {
-        return IpAdress;
+    public String getIpAddress() {
+        return IpAddress;
     }
 
-    public void setIpAdress(String ipAdress) {
-        IpAdress = ipAdress;
+    public void setIpAddress(String ipAddress) {
+        IpAddress = ipAddress;
     }
 }
